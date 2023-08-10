@@ -2,35 +2,37 @@ import { render, screen } from "@testing-library/react";
 import App from "./App";
 import userEvent from "@testing-library/user-event";
 
-test("contains an add recipe button that when clicked opens a form", async () => {
-  // render the landing page
+test("Chef Boyardee can add and see multiple recipes", async () => {
   render(<App />);
 
-  // wait for the page to load (implied, no async operations)
+  const addMultipleRecipes = async (name, instructions) => {
+    const addButton = await screen.findByRole("button", { name: "Add Recipe" });
+    userEvent.click(addButton);
 
-  // click Add Recipe button
-  let button = screen.getByRole("button", { name: "Add Recipe" });
-  userEvent.click(button);
+    const recipeNameBox = await screen.findByRole("textbox", {
+      name: /Recipe name/i,
+    });
+    userEvent.type(recipeNameBox, name);
 
-  // Wait for the form to appear on the screen (override the default of 1000ms as an example)
-  let form = await screen.findByRole("form", undefined, { timeout: 3000 });
+    const instructionsBox = await screen.findByRole("textbox", {
+      name: /instructions/i,
+    });
+    userEvent.type(instructionsBox, instructions);
 
-  // Verify the form appears
-  expect(form).toBeInTheDocument();
+    const submitButton = await screen.findByRole("button", { name: /Submit/i });
+    userEvent.click(submitButton);
+  };
 
-  // Then I should see a form with fields: "Recipe Name" and "Recipe Instructions"
+  await addMultipleRecipes("Recipe 1", "Instructions for Recipe 1");
+  await addMultipleRecipes("Recipe 2", "Instructions for Recipe 2");
+
+  expect(await screen.findByText("Recipe 1")).toBeInTheDocument();
   expect(
-    screen.getByRole("textbox", { name: /Recipe name/i })
+    await screen.findByText("Instructions for Recipe 1")
   ).toBeInTheDocument();
+  expect(await screen.findByText("Recipe 2")).toBeInTheDocument();
   expect(
-    screen.getByRole("textbox", { name: /instructions/i })
+    await screen.findByText("Instructions for Recipe 2")
   ).toBeInTheDocument();
-
-  // And the "Add Recipe" button should no longer be on the screen.
-  // Use queryBy instead of getBy because getBy throws an error when it doesn't have exactly 1 match
-  button = screen.queryByRole("button", { name: "Add Recipe" });
-  expect(button).toBeNull();
-
-  let recipe = await screen.findByText(/Name:.*Tofu Scramble Tacos/i);
-
 });
+
